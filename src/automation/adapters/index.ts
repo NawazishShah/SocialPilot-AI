@@ -4,7 +4,7 @@
 
 import { Page } from 'playwright';
 import type { Platform } from '../../config/constants';
-import { TwitterAdapter } from './adapters/twitter.adapter';
+import { TwitterAdapter } from './twitter.adapter';
 
 // ─── Adapter Interface ───────────────────────────────────────
 

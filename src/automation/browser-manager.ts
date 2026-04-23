@@ -42,7 +42,7 @@ class BrowserManager {
    * Acquire a browser context for an account.
    * Reuses existing context if available, otherwise creates a new one.
    */
-  async acquireContext(accountId: string): Promise<BrowserContext> {
+  async acquireContext(accountId: string, options?: { storageStatePath?: string }): Promise<BrowserContext> {
     await this.initialize();
 
     // Reuse existing context if not in use
@@ -68,6 +68,7 @@ class BrowserManager {
       viewport: stealthConfig.viewport,
       locale: stealthConfig.locale,
       timezoneId: stealthConfig.timezoneId,
+      storageState: options?.storageStatePath,
       javaScriptEnabled: true,
     });
 
@@ -86,6 +87,13 @@ class BrowserManager {
 
     log.info({ accountId, totalContexts: this.contexts.size }, 'New browser context created');
     return context;
+  }
+
+  /**
+   * Persist a browser context session to disk.
+   */
+  async saveStorageState(context: BrowserContext, storageStatePath: string): Promise<void> {
+    await context.storageState({ path: storageStatePath });
   }
 
   /**

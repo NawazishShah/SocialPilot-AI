@@ -12,4 +12,5 @@ contentRoutes.get('/:id', controller.getContent);
 contentRoutes.post('/generate', controller.generateContent);
 contentRoutes.put('/:id/approve', controller.approveContent);
 contentRoutes.put('/:id/archive', controller.archiveContent);
+contentRoutes.put('/:id/reject', controller.rejectContent);
 contentRoutes.delete('/:id', controller.deleteContent);

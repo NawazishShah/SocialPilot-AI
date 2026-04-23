@@ -13,6 +13,10 @@ import { contentRoutes } from './modules/content/content.routes';
 import { scheduleRoutes } from './modules/schedules/schedules.routes';
 import { healthRoutes } from './modules/health/health.routes';
 import { pipelineRoutes } from './modules/pipeline/pipeline.routes';
+import { engineRoutes } from './modules/engine/engine.routes';
+import { logsRoutes } from './modules/logs/logs.routes';
+import { analyticsRoutes } from './modules/analytics/analytics.routes';
+import { topicsRoutes } from './modules/topics/topics.routes';
 
 export function createServer() {
   const app = express();
@@ -53,6 +57,10 @@ export function createServer() {
   app.use('/api/content', contentRoutes);
   app.use('/api/schedules', scheduleRoutes);
   app.use('/api/pipeline', pipelineRoutes);
+  app.use('/api/engine', engineRoutes);
+  app.use('/api/logs', logsRoutes);
+  app.use('/api/analytics', analyticsRoutes);
+  app.use('/api/topics', topicsRoutes);
   app.use('/api/health', healthRoutes);
 
   // Root route

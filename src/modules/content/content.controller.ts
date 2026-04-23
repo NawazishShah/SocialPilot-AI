@@ -23,10 +23,19 @@ const generateContentSchema = z.object({
 export async function listContent(req: Request, res: Response, next: NextFunction) {
   try {
     const { accountId, status, platform, page = '1', limit = '20' } = req.query;
+
+    const accountIdCandidate = Array.isArray(accountId) ? accountId[0] : accountId;
+    const statusCandidate = Array.isArray(status) ? status[0] : status;
+    const platformCandidate = Array.isArray(platform) ? platform[0] : platform;
+
+    const accountIdValue = typeof accountIdCandidate === 'string' ? accountIdCandidate : undefined;
+    const statusValue = typeof statusCandidate === 'string' ? statusCandidate : undefined;
+    const platformValue = typeof platformCandidate === 'string' ? platformCandidate : undefined;
+
     const result = await contentService.list({
-      accountId: accountId as string | undefined,
-      status: status as string | undefined,
-      platform: platform as string | undefined,
+      accountId: accountIdValue,
+      status: statusValue,
+      platform: platformValue,
       page: parseInt(page as string, 10),
       limit: parseInt(limit as string, 10),
     });
@@ -38,7 +47,9 @@ export async function listContent(req: Request, res: Response, next: NextFunctio
 
 export async function getContent(req: Request, res: Response, next: NextFunction) {
   try {
-    const content = await contentService.getById(req.params.id);
+    const idCandidate = (req.params as Record<string, unknown>).id;
+    const id = typeof idCandidate === 'string' ? idCandidate : '';
+    const content = await contentService.getById(id);
     res.json({ data: content });
   } catch (err) {
     next(err);
@@ -60,7 +71,9 @@ export async function generateContent(req: Request, res: Response, next: NextFun
 
 export async function approveContent(req: Request, res: Response, next: NextFunction) {
   try {
-    const content = await contentService.approve(req.params.id);
+    const idCandidate = (req.params as Record<string, unknown>).id;
+    const id = typeof idCandidate === 'string' ? idCandidate : '';
+    const content = await contentService.approve(id);
     res.json({ data: content });
   } catch (err) {
     next(err);
@@ -69,7 +82,20 @@ export async function approveContent(req: Request, res: Response, next: NextFunc
 
 export async function archiveContent(req: Request, res: Response, next: NextFunction) {
   try {
-    const content = await contentService.archive(req.params.id);
+    const idCandidate = (req.params as Record<string, unknown>).id;
+    const id = typeof idCandidate === 'string' ? idCandidate : '';
+    const content = await contentService.archive(id);
+    res.json({ data: content });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function rejectContent(req: Request, res: Response, next: NextFunction) {
+  try {
+    const idCandidate = (req.params as Record<string, unknown>).id;
+    const id = typeof idCandidate === 'string' ? idCandidate : '';
+    const content = await contentService.archive(id);
     res.json({ data: content });
   } catch (err) {
     next(err);
@@ -78,7 +104,9 @@ export async function archiveContent(req: Request, res: Response, next: NextFunc
 
 export async function deleteContent(req: Request, res: Response, next: NextFunction) {
   try {
-    await contentService.delete(req.params.id);
+    const idCandidate = (req.params as Record<string, unknown>).id;
+    const id = typeof idCandidate === 'string' ? idCandidate : '';
+    await contentService.delete(id);
     res.status(204).send();
   } catch (err) {
     next(err);

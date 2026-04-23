@@ -1,6 +1,7 @@
 import type { Platform } from '../config/constants';
 import { createModuleLogger } from '../utils';
 import { scheduleService } from './schedule.service';
+import { engineService } from './engine.service';
 import { postingPipelineQueue } from '../jobs/queues';
 
 const log = createModuleLogger('scheduler-runner');
@@ -43,6 +44,9 @@ export class SchedulerRunnerService {
     this.running = true;
 
     try {
+      const enabled = await engineService.isEnabled();
+      if (!enabled) return;
+
       const due = await scheduleService.findDueSchedules();
       if (due.length === 0) return;
 

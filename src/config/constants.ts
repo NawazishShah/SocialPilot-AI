@@ -34,6 +34,7 @@ export const PLATFORM_LIMITS: Record<Platform, { maxChars: number; maxHashtags: 
 export const QUEUE_NAMES = {
   CONTENT_GENERATION: 'content-generation',
   POST_PUBLISHING: 'post-publishing',
+  POSTING_PIPELINE: 'posting-pipeline',
   ANALYTICS_COLLECTION: 'analytics-collection',
   ACCOUNT_HEALTH: 'account-health',
 } as const;
@@ -48,6 +49,10 @@ export const JOB_DEFAULTS = {
   POST_PUBLISHING: {
     attempts: 2,
     backoff: { type: 'fixed' as const, delay: 30000 },
+  },
+  POSTING_PIPELINE: {
+    attempts: 3,
+    backoff: { type: 'exponential' as const, delay: 15000 },
   },
   ANALYTICS_COLLECTION: {
     attempts: 3,

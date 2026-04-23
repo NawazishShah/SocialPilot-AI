@@ -32,6 +32,18 @@ export const postPublishingQueue = new Queue(QUEUE_NAMES.POST_PUBLISHING, {
   },
 });
 
+// ─── Automated Posting Pipeline Queue ─────────────────────────
+
+export const postingPipelineQueue = new Queue(QUEUE_NAMES.POSTING_PIPELINE, {
+  connection,
+  defaultJobOptions: {
+    attempts: JOB_DEFAULTS.POSTING_PIPELINE.attempts,
+    backoff: JOB_DEFAULTS.POSTING_PIPELINE.backoff,
+    removeOnComplete: { age: 86400, count: 5000 },
+    removeOnFail: { age: 1209600 },
+  },
+});
+
 // ─── Analytics Collection Queue ───────────────────────────────
 
 export const analyticsCollectionQueue = new Queue(QUEUE_NAMES.ANALYTICS_COLLECTION, {

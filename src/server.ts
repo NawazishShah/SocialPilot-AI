@@ -12,6 +12,7 @@ import { accountRoutes } from './modules/accounts/accounts.routes';
 import { contentRoutes } from './modules/content/content.routes';
 import { scheduleRoutes } from './modules/schedules/schedules.routes';
 import { healthRoutes } from './modules/health/health.routes';
+import { pipelineRoutes } from './modules/pipeline/pipeline.routes';
 
 export function createServer() {
   const app = express();
@@ -51,6 +52,7 @@ export function createServer() {
   app.use('/api/accounts', accountRoutes);
   app.use('/api/content', contentRoutes);
   app.use('/api/schedules', scheduleRoutes);
+  app.use('/api/pipeline', pipelineRoutes);
   app.use('/api/health', healthRoutes);
 
   // Root route

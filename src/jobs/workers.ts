@@ -8,6 +8,7 @@ import { QUEUE_NAMES } from '../config/constants';
 import { createModuleLogger } from '../utils';
 import { processContentGeneration } from './processors/content-generation.processor';
 import { processPostPublishing } from './processors/post-publishing.processor';
+import { processPostingPipeline } from './processors/posting-pipeline.processor';
 
 const log = createModuleLogger('workers');
 
@@ -66,7 +67,31 @@ export function startWorkers() {
     log.error({ jobId: job?.id, err: err.message }, '❌ Post publishing failed');
   });
 
+  // ─── Automated Posting Pipeline Worker ────────────────────
+  const pipelineWorker = new Worker(
+    QUEUE_NAMES.POSTING_PIPELINE,
+    async (job: Job) => {
+      log.info({ jobId: job.id, data: job.data }, `Processing automated posting pipeline job`);
+      return processPostingPipeline(job as unknown as Job<any>);
+    },
+    {
+      connection: createRedisConnection(),
+      concurrency: 1,
+    }
+  );
+
+  pipelineWorker.on('completed', (job) => {
+    log.info({ jobId: job.id }, '✅ Posting pipeline completed');
+  });
+
+  pipelineWorker.on('failed', (job, err) => {
+    log.error(
+      { jobId: job?.id, err: err.message, attemptsMade: job?.attemptsMade, attempts: job?.opts?.attempts },
+      '❌ Posting pipeline failed'
+    );
+  });
+
   log.info('🏭 All workers started');
 
-  return { contentWorker, publishWorker };
+  return { contentWorker, publishWorker, pipelineWorker };
 }

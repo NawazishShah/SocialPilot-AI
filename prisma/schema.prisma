@@ -1,0 +1,145 @@
+// ═══════════════════════════════════════════════════════════════
+// Prisma Schema — AI Social Media Automation System
+// ═══════════════════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Social Media Accounts ─────────────────────────────────────
+
+model Account {
+  id           String    @id @default(uuid())
+  platform     String    @db.VarChar(20)    // twitter | linkedin | instagram | facebook
+  username     String    @db.VarChar(100)
+  displayName  String?   @db.VarChar(200)
+  credentials  String                       // AES-256-GCM encrypted JSON
+  sessionData  Json?                        // browser cookies for session reuse
+  proxyConfig  Json?                        // { host, port, user, pass }
+  status       String    @default("active") @db.VarChar(20) // active | suspended | error
+  lastHealthAt DateTime?
+  metadata     Json      @default("{}")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  content   Content[]
+  schedules Schedule[]
+  postLogs  PostLog[]
+  analytics Analytics[]
+
+  @@unique([platform, username])
+  @@map("accounts")
+}
+
+// ─── Generated Content ─────────────────────────────────────────
+
+model Content {
+  id           String    @id @default(uuid())
+  accountId    String
+  platform     String    @db.VarChar(20)
+  contentType  String    @db.VarChar(30)    // text | image | thread | story
+  body         String                       // the post text
+  hashtags     String[]  @default([])
+  mediaUrls    String[]  @default([])
+  aiModel      String?   @db.VarChar(50)
+  aiPromptHash String?   @db.VarChar(64)
+  tokensUsed   Int?
+  status       String    @default("draft") @db.VarChar(20) // draft | approved | published | failed | archived
+  publishedAt  DateTime?
+  postUrl      String?
+  metadata     Json      @default("{}")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  account   Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  postLogs  PostLog[]
+  analytics Analytics[]
+  schedules Schedule[]
+
+  @@index([accountId, status])
+  @@index([platform])
+  @@index([status])
+  @@map("content")
+}
+
+// ─── Posting Schedules ─────────────────────────────────────────
+
+model Schedule {
+  id             String    @id @default(uuid())
+  accountId      String
+  contentId      String?                     // null = auto-generate content
+  cronExpression String?   @db.VarChar(100)  // e.g. '0 9 * * *'
+  timezone       String    @default("UTC") @db.VarChar(50)
+  contentConfig  Json?                       // { topic, tone, type } for auto-gen
+  status         String    @default("active") @db.VarChar(20) // active | paused | completed
+  nextRunAt      DateTime?
+  lastRunAt      DateTime?
+  runCount       Int       @default(0)
+  maxRuns        Int?                        // null = unlimited
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  account  Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  content  Content?  @relation(fields: [contentId], references: [id])
+  postLogs PostLog[]
+
+  @@index([nextRunAt])
+  @@map("schedules")
+}
+
+// ─── Post Execution Logs ───────────────────────────────────────
+
+model PostLog {
+  id             String   @id @default(uuid())
+  contentId      String
+  accountId      String
+  scheduleId     String?
+  jobId          String?  @db.VarChar(100)   // BullMQ job ID
+  status         String   @db.VarChar(20)    // success | failed | retrying
+  errorMessage   String?
+  errorStack     String?
+  screenshotPath String?
+  durationMs     Int?
+  attemptNumber  Int      @default(1)
+  metadata       Json     @default("{}")
+  executedAt     DateTime @default(now())
+
+  content  Content   @relation(fields: [contentId], references: [id])
+  account  Account   @relation(fields: [accountId], references: [id])
+  schedule Schedule? @relation(fields: [scheduleId], references: [id])
+
+  @@index([contentId])
+  @@index([accountId])
+  @@index([executedAt])
+  @@map("post_logs")
+}
+
+// ─── Post Analytics ────────────────────────────────────────────
+
+model Analytics {
+  id             String   @id @default(uuid())
+  contentId      String
+  accountId      String
+  impressions    Int      @default(0)
+  likes          Int      @default(0)
+  comments       Int      @default(0)
+  shares         Int      @default(0)
+  clicks         Int      @default(0)
+  engagementRate Decimal? @db.Decimal(5, 4)
+  collectedAt    DateTime @default(now())
+  metadata       Json     @default("{}")
+
+  content Content @relation(fields: [contentId], references: [id])
+  account Account @relation(fields: [accountId], references: [id])
+
+  @@unique([contentId, collectedAt])
+  @@index([accountId])
+  @@index([collectedAt])
+  @@map("analytics")
+}

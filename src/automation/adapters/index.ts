@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { Page } from 'playwright';
-import type { Platform } from '../config/constants';
+import type { Platform } from '../../config/constants';
 import { TwitterAdapter } from './adapters/twitter.adapter';
 
 // ─── Adapter Interface ───────────────────────────────────────

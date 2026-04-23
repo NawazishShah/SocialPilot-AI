@@ -25,8 +25,15 @@ const envSchema = z.object({
   REDIS_DB: z.coerce.number().default(0),
 
   // OpenAI
-  OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY is required'),
+  OPENAI_API_KEY: z.string().optional().default(''),
   OPENAI_MODEL: z.string().default('gpt-4o'),
+
+  // AI Provider
+  AI_PROVIDER: z.enum(['openai', 'ollama']).optional(),
+
+  // Ollama (Local LLM)
+  OLLAMA_BASE_URL: z.string().optional(),
+  OLLAMA_MODEL: z.string().optional(),
 
   // Encryption
   ENCRYPTION_KEY: z.string().min(32, 'ENCRYPTION_KEY must be at least 32 characters'),

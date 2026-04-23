@@ -5,37 +5,41 @@
 import OpenAI from 'openai';
 import { openaiConfig } from '../../config';
 import { createModuleLogger } from '../../utils';
+import type { GenerateOptions, StructuredContentResponse, TextResponse } from './types';
 
 const log = createModuleLogger('openai-provider');
 
-interface StructuredResponse {
-  text: string;
-  hashtags: string[];
-  model: string;
-  tokensUsed: number;
-}
-
 class OpenAIProvider {
-  private client: OpenAI;
+  private client: OpenAI | null = null;
 
-  constructor() {
+  private getClient(): OpenAI {
+    if (this.client) return this.client;
+    if (!openaiConfig.apiKey) {
+      throw new Error('OPENAI_API_KEY is missing. Set AI_PROVIDER=ollama to use local LLM, or provide OPENAI_API_KEY.');
+    }
     this.client = new OpenAI({ apiKey: openaiConfig.apiKey });
+    return this.client;
   }
 
   /**
    * Generate content with structured JSON output.
    */
-  async generateStructured(systemPrompt: string, userPrompt: string): Promise<StructuredResponse> {
+  async generateStructured(
+    systemPrompt: string,
+    userPrompt: string,
+    options?: GenerateOptions
+  ): Promise<StructuredContentResponse> {
     try {
-      const response = await this.client.chat.completions.create({
+      const client = this.getClient();
+      const response = await client.chat.completions.create({
         model: openaiConfig.model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
         response_format: { type: 'json_object' },
-        temperature: 0.8,
-        max_tokens: 1000,
+        temperature: options?.temperature ?? 0.8,
+        max_tokens: options?.maxTokens ?? 1000,
       });
 
       const choice = response.choices[0];
@@ -63,18 +67,23 @@ class OpenAIProvider {
   /**
    * Simple text completion (non-structured).
    */
-  async generateText(systemPrompt: string, userPrompt: string): Promise<string> {
-    const response = await this.client.chat.completions.create({
+  async generateText(systemPrompt: string, userPrompt: string, options?: GenerateOptions): Promise<TextResponse> {
+    const client = this.getClient();
+    const response = await client.chat.completions.create({
       model: openaiConfig.model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      temperature: 0.8,
-      max_tokens: 1000,
+      temperature: options?.temperature ?? 0.8,
+      max_tokens: options?.maxTokens ?? 1000,
     });
 
-    return response.choices[0]?.message?.content || '';
+    return {
+      text: response.choices[0]?.message?.content || '',
+      model: openaiConfig.model,
+      tokensUsed: response.usage?.total_tokens || 0,
+    };
   }
 }
 

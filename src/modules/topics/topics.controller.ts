@@ -46,7 +46,9 @@ export async function createTopic(req: Request, res: Response, next: NextFunctio
 
 export async function deleteTopic(req: Request, res: Response, next: NextFunction) {
   try {
-    await topicsService.delete(req.params.id);
+    const idCandidate = (req.params as Record<string, unknown>).id;
+    const id = typeof idCandidate === 'string' ? idCandidate : '';
+    await topicsService.delete(id);
     res.status(204).send();
   } catch (err) {
     next(err);

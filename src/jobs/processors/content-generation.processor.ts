@@ -27,17 +27,19 @@ interface ContentGenJobData {
 
 export async function processContentGeneration(job: Job<ContentGenJobData>) {
   const { accountId, platform, config, scheduleId, autoPublish } = job.data;
+  const startTime = Date.now();
 
-  log.info({ jobId: job.id, platform, topic: config.topic }, 'Generating content...');
+  log.info({ jobId: job.id, platform, topic: config.topic, attempt: job.attemptsMade + 1 }, 'Generating content...');
 
-  // ─── Step 1: Call AI Generator ────────────────────────────
-  const aiResult = await aiGenerator.generate({
-    platform,
-    contentType: config.contentType,
-    topic: config.topic,
-    tone: config.tone,
-    additionalContext: config.additionalContext,
-  });
+  try {
+    // ─── Step 1: Call AI Generator ────────────────────────────
+    const aiResult = await aiGenerator.generate({
+      platform,
+      contentType: config.contentType,
+      topic: config.topic,
+      tone: config.tone,
+      additionalContext: config.additionalContext,
+    });
 
   // ─── Step 2: Save to Database ─────────────────────────────
   const promptHash = sha256(`${platform}:${config.contentType}:${config.topic}:${config.tone}`);
@@ -62,34 +64,55 @@ export async function processContentGeneration(job: Job<ContentGenJobData>) {
     },
   });
 
-  log.info(
-    { contentId: content.id, chars: aiResult.text.length, tokens: aiResult.tokensUsed },
-    'Content generated and saved'
-  );
-
-  // ─── Step 3: Auto-publish if configured ───────────────────
-  if (autoPublish) {
-    await postPublishingQueue.add(
-      'publish',
-      {
-        contentId: content.id,
-        accountId,
-        platform,
-        scheduleId,
-      },
-      {
-        delay: Math.floor(Math.random() * 5000) + 1000, // 1-6s human-like delay
-      }
+    log.info(
+      { contentId: content.id, chars: aiResult.text.length, tokens: aiResult.tokensUsed, durationMs: Date.now() - startTime },
+      'Content generated and saved'
     );
 
-    log.info({ contentId: content.id }, 'Auto-publish job dispatched');
-  }
+    // ─── Step 3: Auto-publish if configured ───────────────────
+    if (autoPublish) {
+      await postPublishingQueue.add(
+        'publish',
+        {
+          contentId: content.id,
+          accountId,
+          platform,
+          scheduleId,
+        },
+        {
+          delay: Math.floor(Math.random() * 5000) + 1000, // 1-6s human-like delay
+        }
+      );
 
-  return {
-    contentId: content.id,
-    accountId,
-    platform,
-    textLength: aiResult.text.length,
-    tokensUsed: aiResult.tokensUsed,
-  };
+      log.info({ contentId: content.id }, 'Auto-publish job dispatched');
+    }
+
+    return {
+      contentId: content.id,
+      accountId,
+      platform,
+      textLength: aiResult.text.length,
+      tokensUsed: aiResult.tokensUsed,
+      durationMs: Date.now() - startTime,
+    };
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    const durationMs = Date.now() - startTime;
+    
+    log.error(
+      { 
+        jobId: job.id, 
+        accountId, 
+        platform, 
+        topic: config.topic,
+        error: error.message,
+        stack: error.stack,
+        attempt: job.attemptsMade + 1,
+        durationMs,
+      },
+      'Content generation failed'
+    );
+    
+    throw error;
+  }
 }

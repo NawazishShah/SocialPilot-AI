@@ -66,3 +66,15 @@ export const accountHealthQueue = new Queue(QUEUE_NAMES.ACCOUNT_HEALTH, {
     removeOnFail: { age: 86400 },
   },
 });
+
+// ─── Close all queues gracefully ───────────────────────────────
+
+export async function closeQueues() {
+  await Promise.all([
+    contentGenerationQueue.close(),
+    postPublishingQueue.close(),
+    postingPipelineQueue.close(),
+    analyticsCollectionQueue.close(),
+    accountHealthQueue.close(),
+  ]);
+}

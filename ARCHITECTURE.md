@@ -1,5 +1,20 @@
 # PostPilot AI - System Architecture
 
+## Quick Start
+
+```bash
+# Start dependencies
+docker-compose up -d
+
+# Run database migration
+npm run db:migrate
+
+# Start the application
+npm run dev
+```
+
+The system will start on http://localhost:3002
+
 ## Overview
 
 PostPilot AI is a comprehensive social media automation system that uses AI to generate content and Playwright for browser automation to post to social media platforms. The system is built with TypeScript, Node.js, BullMQ for job queuing, Prisma for database management, and Redis for caching and queue management.

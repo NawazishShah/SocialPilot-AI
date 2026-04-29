@@ -1,8 +1,8 @@
 {
-  "name": "content-jinee",
+  "name": "postpilot-ai",
   "version": "1.0.0",
   "description": "AI-powered social media automation system",
-  "main": "dist/index.js",
+  "main": "dist/main.js",
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "dev:server": "RUN_MODE=server tsx watch src/main.ts",

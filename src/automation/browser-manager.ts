@@ -5,7 +5,6 @@
 import { chromium, Browser, BrowserContext } from 'playwright';
 import { browserConfig } from '../config';
 import { createModuleLogger } from '../utils';
-import { getStealthConfig } from './stealth';
 
 const log = createModuleLogger('browser-manager');
 
@@ -61,15 +60,11 @@ class BrowserManager {
       );
     }
 
-    // Create new context with stealth config
-    const stealthConfig = getStealthConfig();
+    // Create new context
     const context = await this.browser!.newContext({
-      userAgent: stealthConfig.userAgent,
-      viewport: stealthConfig.viewport,
-      locale: stealthConfig.locale,
-      timezoneId: stealthConfig.timezoneId,
       storageState: options?.storageStatePath,
       javaScriptEnabled: true,
+      viewport: { width: 1280, height: 720 },
     });
 
     // Inject anti-detection scripts

@@ -13,7 +13,7 @@ const envSchema = z.object({
   // Server
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3000),
-  API_KEY: z.string().min(1, 'API_KEY is required'),
+  API_KEY: z.string().min(1, 'API_KEY is required').transform((v) => v.trim()),
 
   // Database
   DATABASE_URL: z.string().url('DATABASE_URL must be a valid connection string'),

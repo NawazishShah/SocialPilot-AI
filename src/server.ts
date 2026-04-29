@@ -46,6 +46,16 @@ export function createServer() {
     if (req.path === '/health') return next();
 
     if (!apiKey || apiKey !== serverConfig.apiKey) {
+      logger.warn(
+        { 
+          path: req.path, 
+          hasApiKey: !!apiKey,
+          apiKeyMatch: apiKey === serverConfig.apiKey,
+          receivedKey: apiKey ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : 'none',
+          expectedKey: `${serverConfig.apiKey.substring(0, 4)}...${serverConfig.apiKey.substring(serverConfig.apiKey.length - 4)}`
+        },
+        'Auth failure'
+      );
       res.status(401).json({ error: 'Invalid or missing API key' });
       return;
     }

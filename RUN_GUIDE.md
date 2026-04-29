@@ -3,9 +3,8 @@
 ## Prerequisites
 
 1. **Node.js** (v20 or higher)
-2. **PostgreSQL** database
-3. **Redis** server
-4. **OpenAI API key**
+2. **Docker** (for PostgreSQL and Redis)
+3. **OpenAI API key**
 
 ## Initial Setup
 
@@ -21,48 +20,38 @@ npm install
 Copy `.env.example` to `.env` and configure:
 
 ```bash
-cp .env.example .env
+copy .env.example .env
 ```
 
 Edit `.env` with your values:
 
 ```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/postpilot"
+# Generate encryption key (run: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+ENCRYPTION_KEY=your-64-char-hex-key
 
-# Redis
-REDIS_URL="redis://localhost:6379"
+# Generate API key (run: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
+API_KEY=your-api-key
 
-# OpenAI
-OPENAI_API_KEY="your-openai-api-key"
-
-# API Key for Admin Dashboard
-API_KEY="your-secret-api-key"
-
-# Optional: Run Mode (all/server/worker/scheduler)
-RUN_MODE=all
+# OpenAI API key
+OPENAI_API_KEY=sk-your-openai-key
 ```
 
-### 3. Setup Database
+### 3. Start Dependencies
 
 ```bash
-# Generate Prisma client
-npm run db:generate
+docker-compose up -d
+```
 
+This starts PostgreSQL on port 5433 and Redis on port 6379.
+
+### 4. Setup Database
+
+```bash
 # Run migrations
 npm run db:migrate
-
-# (Optional) Seed database
-npm run db:seed
 ```
 
-### 4. Verify Database Connection
-
-```bash
-npm run db:studio
-```
-
-This opens Prisma Studio to inspect your database.
+Enter a migration name when prompted (e.g., "init").
 
 ## Running the System
 
@@ -75,7 +64,7 @@ npm run dev
 ```
 
 This starts:
-- HTTP API server (port 3001)
+- HTTP API server (port 3002)
 - BullMQ workers (content generation, post publishing, posting pipeline)
 - Scheduler runner (polls every 15s)
 
@@ -149,7 +138,7 @@ localStorage.setItem('apiKey', 'your-secret-api-key')
 Use the API to add an account:
 
 ```bash
-curl -X POST http://localhost:3001/api/accounts \
+curl -X POST http://localhost:3002/api/accounts \
   -H "Content-Type: application/json" \
   -H "x-api-key: your-secret-api-key" \
   -d '{
@@ -165,7 +154,7 @@ curl -X POST http://localhost:3001/api/accounts \
 Via API:
 
 ```bash
-curl -X POST http://localhost:3001/api/topics \
+curl -X POST http://localhost:3002/api/topics \
   -H "Content-Type: application/json" \
   -H "x-api-key: your-secret-api-key" \
   -d '{
@@ -179,7 +168,7 @@ Or via the Admin Dashboard at http://localhost:5173/topics
 ### 3. Create a Schedule
 
 ```bash
-curl -X POST http://localhost:3001/api/schedules \
+curl -X POST http://localhost:3002/api/schedules \
   -H "Content-Type: application/json" \
   -H "x-api-key: your-secret-api-key" \
   -d '{
@@ -199,7 +188,7 @@ curl -X POST http://localhost:3001/api/schedules \
 ### 4. Start the Engine
 
 ```bash
-curl -X POST http://localhost:3001/api/engine/start \
+curl -X POST http://localhost:3002/api/engine/start \
   -H "x-api-key: your-secret-api-key"
 ```
 
@@ -215,7 +204,7 @@ The scheduler will now automatically:
 
 **View Generated Posts:**
 ```bash
-curl http://localhost:3001/api/content \
+curl http://localhost:3002/api/content \
   -H "x-api-key: your-secret-api-key"
 ```
 
@@ -223,7 +212,7 @@ Or via Admin Dashboard at http://localhost:5173/posts
 
 **View Logs:**
 ```bash
-curl http://localhost:3001/api/logs \
+curl http://localhost:3002/api/logs \
   -H "x-api-key: your-secret-api-key"
 ```
 
@@ -231,7 +220,7 @@ Or via Admin Dashboard at http://localhost:5173/logs
 
 **View Analytics:**
 ```bash
-curl http://localhost:3001/api/analytics \
+curl http://localhost:3002/api/analytics \
   -H "x-api-key: your-secret-api-key"
 ```
 
@@ -242,7 +231,7 @@ Or via Admin Dashboard at http://localhost:5173/analytics
 To generate content without scheduling:
 
 ```bash
-curl -X POST http://localhost:3001/api/content/generate \
+curl -X POST http://localhost:3002/api/content/generate \
   -H "Content-Type: application/json" \
   -H "x-api-key: your-secret-api-key" \
   -d '{
@@ -258,7 +247,7 @@ curl -X POST http://localhost:3001/api/content/generate \
 To publish an approved post:
 
 ```bash
-curl -X POST http://localhost:3001/api/pipeline/run \
+curl -X POST http://localhost:3002/api/pipeline/run \
   -H "Content-Type: application/json" \
   -H "x-api-key: your-secret-api-key" \
   -d '{
@@ -271,7 +260,7 @@ curl -X POST http://localhost:3001/api/pipeline/run \
 ### Stop Engine (Pauses Scheduling)
 
 ```bash
-curl -X POST http://localhost:3001/api/engine/stop \
+curl -X POST http://localhost:3002/api/engine/stop \
   -H "x-api-key: your-secret-api-key"
 ```
 
@@ -326,7 +315,7 @@ mkdir -p sessions
 
 1. Check workers are running: Look for "✅ BullMQ workers started" in logs
 2. Check Redis: `redis-cli` → `KEYS bull:*` to see queue keys
-3. Check engine status: `curl http://localhost:3001/api/engine/status`
+3. Check engine status: `curl http://localhost:3002/api/engine/status`
 4. Check schedule status: Should be "active"
 
 ### Rate Limiting Errors
@@ -405,7 +394,7 @@ Build and run:
 
 ```bash
 docker build -t postpilot .
-docker run -p 3001:3001 --env-file .env postpilot
+docker run -p 3002:3002 --env-file .env postpilot
 ```
 
 ### Scaling Workers

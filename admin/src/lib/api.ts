@@ -20,7 +20,15 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const apiKey = localStorage.getItem('apiKey');
   if (apiKey) {
-    config.headers['x-api-key'] = apiKey;
+    // Use .set() for modern Axios, fallback to direct assignment for older versions
+    if (config.headers.set) {
+      config.headers.set('x-api-key', apiKey);
+    } else {
+      (config.headers as any)['x-api-key'] = apiKey;
+    }
+    console.log('[API Client] Attaching API Key:', `${apiKey.substring(0, 4)}...`);
+  } else {
+    console.warn('[API Client] No API Key found in localStorage');
   }
   return config;
 });

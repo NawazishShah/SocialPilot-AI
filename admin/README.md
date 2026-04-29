@@ -20,7 +20,7 @@ npm install
 ```
 
 2. Configure API endpoint:
-   - The dashboard proxies `/api` requests to `http://localhost:3001` (configured in `vite.config.ts`)
+   - The dashboard proxies `/api` requests to `http://localhost:3002` (configured in `vite.config.ts`)
    - Set your API key in localStorage: `localStorage.setItem('apiKey', 'your-api-key')`
 
 3. Start the development server:
@@ -28,7 +28,7 @@ npm install
 npm run dev
 ```
 
-4. Open http://localhost:3000 in your browser
+4. Open http://localhost:5173 in your browser
 
 ## Build for production
 

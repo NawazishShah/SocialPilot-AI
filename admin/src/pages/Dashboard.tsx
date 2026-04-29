@@ -84,7 +84,7 @@ export default function Dashboard() {
           <div>
             <p className="text-sm text-gray-500">Total Views</p>
             <p className="text-lg font-semibold text-gray-900">
-              {analytics?.totals.views.toLocaleString() || 0}
+              {analytics?.totals?.views?.toLocaleString() ?? 0}
             </p>
           </div>
         </Card>
@@ -96,7 +96,7 @@ export default function Dashboard() {
           <div>
             <p className="text-sm text-gray-500">Avg. Engagement</p>
             <p className="text-lg font-semibold text-gray-900">
-              {analytics?.averages.likes.toFixed(1) || 0}
+              {analytics?.averages?.likes?.toFixed(1) ?? '0.0'}
             </p>
           </div>
         </Card>

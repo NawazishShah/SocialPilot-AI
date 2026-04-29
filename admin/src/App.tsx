@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -6,8 +7,17 @@ import Logs from './pages/Logs';
 import Engine from './pages/Engine';
 import Topics from './pages/Topics';
 import Analytics from './pages/Analytics';
+import Login from './pages/Login';
 
 function App() {
+  const [authenticated, setAuthenticated] = useState<boolean>(
+    () => !!localStorage.getItem('apiKey')
+  );
+
+  if (!authenticated) {
+    return <Login onAuthenticated={() => setAuthenticated(true)} />;
+  }
+
   return (
     <Layout>
       <Routes>

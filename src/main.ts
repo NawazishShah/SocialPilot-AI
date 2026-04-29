@@ -29,12 +29,12 @@ type RunMode = 'server' | 'worker' | 'scheduler' | 'all';
 const mode = (process.env.RUN_MODE || 'all') as RunMode;
 
 async function bootstrap() {
-  logger.info('🚀 Starting PostPilot AI...', { mode });
+  logger.info({ mode }, '🚀 Starting PostPilot AI...');
 
   // ─── Verify Database Connection ─────────────────────────────
   try {
     await prisma.$connect();
-    logger.info('✅ Database connected');
+    logger.info({}, '✅ Database connected');
   } catch (err) {
     logger.fatal({ err }, '❌ Failed to connect to database');
     process.exit(1);
@@ -43,9 +43,8 @@ async function bootstrap() {
   // ─── Verify Redis Connection ────────────────────────────────
   try {
     const redis = getRedisConnection();
-    await redis.connect();
     await redis.ping();
-    logger.info('✅ Redis connected');
+    logger.info({}, '✅ Redis connected');
   } catch (err) {
     logger.fatal({ err }, '❌ Failed to connect to Redis');
     process.exit(1);
@@ -58,7 +57,7 @@ async function bootstrap() {
   if (mode === 'server' || mode === 'all') {
     const app = createServer();
     const server = app.listen(serverConfig.port, () => {
-      logger.info(`✅ HTTP server running on http://localhost:${serverConfig.port}`);
+      logger.info({}, `✅ HTTP server running on http://localhost:${serverConfig.port}`);
     });
 
     components.push({
@@ -66,7 +65,7 @@ async function bootstrap() {
       shutdown: () =>
         new Promise((resolve) => {
           server.close(() => {
-            logger.info('  ✓ HTTP server closed');
+            logger.info({}, '  ✓ HTTP server closed');
             resolve();
           });
         }),
@@ -76,7 +75,7 @@ async function bootstrap() {
   // Workers
   if (mode === 'worker' || mode === 'all') {
     const workers = startWorkers();
-    logger.info('✅ BullMQ workers started');
+    logger.info({}, '✅ BullMQ workers started');
 
     components.push({
       name: 'Workers',
@@ -84,7 +83,7 @@ async function bootstrap() {
         await workers.contentWorker.close();
         await workers.publishWorker.close();
         await workers.pipelineWorker.close();
-        logger.info('  ✓ Workers closed');
+        logger.info({}, '  ✓ Workers closed');
       },
     });
   }
@@ -92,13 +91,13 @@ async function bootstrap() {
   // Scheduler
   if (mode === 'scheduler' || mode === 'all') {
     schedulerRunnerService.start();
-    logger.info('✅ Scheduler runner started');
+    logger.info({}, '✅ Scheduler runner started');
 
     components.push({
       name: 'Scheduler runner',
       shutdown: () => {
         schedulerRunnerService.stop();
-        logger.info('  ✓ Scheduler runner stopped');
+        logger.info({}, '  ✓ Scheduler runner stopped');
         return Promise.resolve();
       },
     });
@@ -106,26 +105,26 @@ async function bootstrap() {
 
   // ─── Graceful Shutdown ─────────────────────────────────────
   const shutdown = async (signal: string) => {
-    logger.info(`\n${signal} received. Shutting down gracefully...`);
+    logger.info({}, `${signal} received. Shutting down gracefully...`);
 
     for (const component of components) {
       try {
         await component.shutdown();
       } catch (err) {
-        logger.error({ err, component: component.name }, `Failed to shutdown ${component.name}`);
+        logger.error({}, `Failed to shutdown ${component.name}`, { err, component: component.name });
       }
     }
 
     await closeQueues();
-    logger.info('  ✓ Queues closed');
+    logger.info({}, '  ✓ Queues closed');
 
     await disconnectDB();
-    logger.info('  ✓ Database disconnected');
+    logger.info({}, '  ✓ Database disconnected');
 
     await disconnectRedis();
-    logger.info('  ✓ Redis disconnected');
+    logger.info({}, '  ✓ Redis disconnected');
 
-    logger.info('👋 Goodbye.');
+    logger.info({}, '👋 Goodbye.');
     process.exit(0);
   };
 
@@ -142,7 +141,7 @@ async function bootstrap() {
     process.exit(1);
   });
 
-  logger.info(`✅ PostPilot AI started in ${mode} mode`);
+  logger.info({ mode }, `✅ PostPilot AI started in ${mode} mode`);
 }
 
 bootstrap();

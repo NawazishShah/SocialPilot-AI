@@ -1,11 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Activity, 
-  Power, 
-  Tag, 
-  BarChart3 
+import {
+  LayoutDashboard,
+  FileText,
+  Activity,
+  Power,
+  Tag,
+  Calendar,
+  BarChart3
 } from 'lucide-react';
 
 const navItems = [
@@ -14,6 +15,7 @@ const navItems = [
   { path: '/logs', label: 'Logs', icon: Activity },
   { path: '/engine', label: 'Engine', icon: Power },
   { path: '/topics', label: 'Topics', icon: Tag },
+  { path: '/schedules', label: 'Schedules', icon: Calendar },
   { path: '/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 

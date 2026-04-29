@@ -19,6 +19,7 @@ interface CreateScheduleInput {
     niche?: string;
   };
   maxRuns?: number;
+  metadata?: any;
 }
 
 interface ListScheduleFilter {
@@ -125,6 +126,7 @@ class ScheduleService {
     if (input.contentConfig !== undefined) data.contentConfig = input.contentConfig;
     if (input.contentId !== undefined) data.contentId = input.contentId;
     if (input.maxRuns !== undefined) data.maxRuns = input.maxRuns;
+    if ((input as any).metadata !== undefined) data.metadata = (input as any).metadata;
 
     const schedule = await prisma.schedule.update({ where: { id }, data });
     log.info({ scheduleId: id }, 'Schedule updated');

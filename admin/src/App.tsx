@@ -6,6 +6,7 @@ import Posts from './pages/Posts';
 import Logs from './pages/Logs';
 import Engine from './pages/Engine';
 import Topics from './pages/Topics';
+import Schedules from './pages/Schedules';
 import Analytics from './pages/Analytics';
 import Login from './pages/Login';
 
@@ -26,6 +27,7 @@ function App() {
         <Route path="/logs" element={<Logs />} />
         <Route path="/engine" element={<Engine />} />
         <Route path="/topics" element={<Topics />} />
+        <Route path="/schedules" element={<Schedules />} />
         <Route path="/analytics" element={<Analytics />} />
       </Routes>
     </Layout>

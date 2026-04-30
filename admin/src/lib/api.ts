@@ -83,4 +83,20 @@ export const topicsApi = {
   delete: (id: string) => api.delete(`/topics/${id}`),
 };
 
+// Schedules API
+export const schedulesApi = {
+  list: (params?: { accountId?: string; status?: string }) =>
+    api.get('/schedules', { params }),
+  get: (id: string) => api.get(`/schedules/${id}`),
+  create: (data: any) => api.post('/schedules', data),
+  pause: (id: string) => api.put(`/schedules/${id}/pause`),
+  resume: (id: string) => api.put(`/schedules/${id}/resume`),
+  delete: (id: string) => api.delete(`/schedules/${id}`),
+};
+
+// Pipeline API
+export const pipelineApi = {
+  run: (data: { scheduleId: string }) => api.post('/pipeline/run', data),
+};
+
 export default api;

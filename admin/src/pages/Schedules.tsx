@@ -7,18 +7,28 @@ import api from '../lib/api';
 interface Schedule {
   id: string;
   accountId: string;
-  cadence: 'hourly' | 'daily' | 'random';
-  dailyHour?: number;
-  dailyMinute?: number;
+  cronExpression: string;
   timezone: string;
   contentConfig: {
     topic: string;
     tone: string;
-  };
-  autoPublish: boolean;
-  status: 'active' | 'paused';
-  lastRunAt?: string;
-  nextRunAt?: string;
+  } | null;
+  status: 'active' | 'paused' | 'completed';
+  runCount: number;
+  maxRuns: number | null;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+  account: {
+    username: string;
+    platform: string;
+    displayName: string | null;
+  } | null;
+  metadata: {
+    autoPublish?: boolean;
+    cadence?: string;
+    dailyHour?: number;
+    dailyMinute?: number;
+  } | null;
 }
 
 export default function Schedules() {
@@ -75,10 +85,25 @@ export default function Schedules() {
 
   const toggleStatus = async (id: string, currentStatus: string) => {
     try {
-      await api.patch(`/schedules/${id}`, { status: currentStatus === 'active' ? 'paused' : 'active' });
+      if (currentStatus === 'active') {
+        await api.put(`/schedules/${id}/pause`);
+      } else {
+        await api.put(`/schedules/${id}/resume`);
+      }
       fetchSchedules();
     } catch (error) {
       console.error('Failed to toggle schedule:', error);
+    }
+  };
+
+  const runNow = async (scheduleId: string) => {
+    try {
+      await api.post('/pipeline/run', { scheduleId });
+      alert('Job enqueued! Check Logs for progress.');
+      fetchSchedules();
+    } catch (error) {
+      console.error('Failed to run schedule:', error);
+      alert('Failed to run schedule. Check console for details.');
     }
   };
 
@@ -207,25 +232,42 @@ export default function Schedules() {
 
       <div className="space-y-4">
         {schedules.length === 0 ? (
-          <Card className="p-6 text-center text-gray-500">No schedules found</Card>
+          <Card className="p-6 text-center text-gray-500">No schedules found. Click "Add Schedule" to create one.</Card>
         ) : (
           schedules.map((schedule) => (
             <Card key={schedule.id} className="p-6">
               <div className="flex justify-between items-start">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge status={schedule.status === 'active' ? 'success' : 'pending'} />
-                    <span className="text-sm text-gray-500">{schedule.cadence}</span>
+                    <Badge status={schedule.status === 'active' ? 'success' : schedule.status === 'paused' ? 'pending' : 'archived'} />
+                    <span className="text-sm text-gray-500">{schedule.metadata?.cadence || schedule.cronExpression}</span>
                   </div>
-                  <h3 className="font-semibold">{schedule.contentConfig.topic}</h3>
+                  <h3 className="font-semibold">{schedule.contentConfig?.topic || 'No topic'}</h3>
                   <p className="text-sm text-gray-600">
-                    {schedule.cadence === 'daily' && `at ${schedule.dailyHour}:${String(schedule.dailyMinute).padStart(2, '0')} `}
-                    {schedule.timezone}
+                    Account: {schedule.account?.username || schedule.accountId} ({schedule.account?.platform || 'unknown'})
                   </p>
-                  <p className="text-sm text-gray-600">Tone: {schedule.contentConfig.tone}</p>
-                  <p className="text-sm text-gray-600">Auto-publish: {schedule.autoPublish ? 'Yes' : 'No'}</p>
+                  <p className="text-sm text-gray-600">
+                    Cron: {schedule.cronExpression} | Timezone: {schedule.timezone}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Runs: {schedule.runCount}{schedule.maxRuns ? `/${schedule.maxRuns}` : ''} |
+                    Auto-publish: {schedule.metadata?.autoPublish !== false ? 'Yes' : 'No'}
+                  </p>
+                  {schedule.nextRunAt && (
+                    <p className="text-sm text-gray-500">
+                      Next run: {new Date(schedule.nextRunAt).toLocaleString()}
+                    </p>
+                  )}
+                  {schedule.lastRunAt && (
+                    <p className="text-sm text-gray-500">
+                      Last run: {new Date(schedule.lastRunAt).toLocaleString()}
+                    </p>
+                  )}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
+                  {schedule.status === 'active' && (
+                    <Button variant="success" onClick={() => runNow(schedule.id)}>Run Now</Button>
+                  )}
                   <Button variant="secondary" onClick={() => toggleStatus(schedule.id, schedule.status)}>
                     {schedule.status === 'active' ? 'Pause' : 'Resume'}
                   </Button>

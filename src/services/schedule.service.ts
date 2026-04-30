@@ -4,6 +4,7 @@
 
 import { prisma } from './database';
 import { NotFoundError, ValidationError, createModuleLogger } from '../utils';
+import { CronExpressionParser } from 'cron-parser';
 
 const log = createModuleLogger('schedule-service');
 
@@ -227,16 +228,14 @@ class ScheduleService {
     });
   }
 
-  /**
-   * Simple next-run calculator.
-   * In production, use a cron parser library like 'cron-parser'.
-   */
-  private calculateNextRun(_cronExpression: string, _timezone: string): Date {
-    // Placeholder: returns 24 hours from now.
-    // Replace with: import parser from 'cron-parser';
-    //   const interval = parser.parseExpression(cronExpression, { tz: timezone });
-    //   return interval.next().toDate();
-    return new Date(Date.now() + 24 * 60 * 60 * 1000);
+  private calculateNextRun(cronExpression: string, timezone: string): Date {
+    try {
+      const interval = CronExpressionParser.parse(cronExpression, { tz: timezone });
+      return interval.next().toDate();
+    } catch (err) {
+      log.error({ err, cronExpression, timezone }, 'Failed to parse cron expression, falling back to 1h');
+      return new Date(Date.now() + 60 * 60 * 1000);
+    }
   }
 }
 

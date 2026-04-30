@@ -24,9 +24,10 @@ const envSchema = z.object({
   REDIS_PASSWORD: z.string().optional().default(''),
   REDIS_DB: z.coerce.number().default(0),
 
-  // OpenAI
+  // OpenAI (or compatible API like Groq)
   OPENAI_API_KEY: z.string().optional().default(''),
   OPENAI_MODEL: z.string().default('gpt-4o'),
+  OPENAI_BASE_URL: z.string().optional(),
 
   // AI Provider
   AI_PROVIDER: z.enum(['openai', 'ollama']).optional(),
@@ -79,6 +80,7 @@ export const redisConfig = {
 export const openaiConfig = {
   apiKey: env.OPENAI_API_KEY,
   model: env.OPENAI_MODEL,
+  baseUrl: env.OPENAI_BASE_URL,
 } as const;
 
 export const browserConfig = {

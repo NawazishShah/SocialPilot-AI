@@ -2,7 +2,7 @@
 // AI Content Generator — orchestrates LLM calls for content
 // ═══════════════════════════════════════════════════════════════
 
-import { openaiProvider } from './providers/openai.provider';
+import { getLLMProvider } from './providers/provider.factory';
 import { getPromptTemplate } from './prompts';
 import { createModuleLogger } from '../utils';
 import { PLATFORM_LIMITS, type Platform, type ContentType, type Tone } from '../config/constants';
@@ -50,7 +50,7 @@ class AIGenerator {
     // ─── Call the LLM ────────────────────────────────────────
     log.info({ platform: input.platform, topic: input.topic }, 'Calling AI provider...');
 
-    const response = await openaiProvider.generateStructured(systemPrompt, userPrompt);
+    const response = await getLLMProvider().generateStructured(systemPrompt, userPrompt);
 
     const latencyMs = Date.now() - startTime;
 

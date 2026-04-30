@@ -17,7 +17,11 @@ class OpenAIProvider {
     if (!openaiConfig.apiKey) {
       throw new Error('OPENAI_API_KEY is missing. Set AI_PROVIDER=ollama to use local LLM, or provide OPENAI_API_KEY.');
     }
-    this.client = new OpenAI({ apiKey: openaiConfig.apiKey });
+    const options: ConstructorParameters<typeof OpenAI>[0] = { apiKey: openaiConfig.apiKey };
+    if (openaiConfig.baseUrl) {
+      options.baseURL = openaiConfig.baseUrl;
+    }
+    this.client = new OpenAI(options);
     return this.client;
   }
 
